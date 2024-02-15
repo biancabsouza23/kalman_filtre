@@ -6,7 +6,7 @@ import webcam
 import kalman
 from enum import Enum
 
-def load_set(name: str) -> list:
+def load_set(name: str) -> list: 
     """
     Carrega imagens de um conjunto de dados.
     """
@@ -392,14 +392,14 @@ def align_features_to_previous(previous_points: np.ndarray, features: np.ndarray
 
 if __name__ == "__main__":   
     # Point Count
-    point_count_list = [2, 5, 10, 20, 50, 100]
+    point_count_list = [2, 5, 10, 20, 50, 100] # define a quantidade de pontos a serem rastreados
     points_to_track_index = 1
-    if points_to_track_index >= len(point_count_list):
+    if points_to_track_index >= len(point_count_list): # se a lista terminar, reinicia
         points_to_track_index = 0
     points_to_track = point_count_list[points_to_track_index]
     
     # Sets
-    available_sets = [f for f in os.listdir("dataset") if os.path.isdir(os.path.join("dataset", f))]
+    available_sets = [f for f in os.listdir("dataset") if os.path.isdir(os.path.join("dataset", f))] # define os conjuntos de dados disponíveis
     available_sets.sort()
     set_index = 0
     if set_index >= len(available_sets):
@@ -408,48 +408,51 @@ if __name__ == "__main__":
         set_index = None
         
     # Detectors
-    detectors = [f for f in FeatureExtractMode]
+    detectors = [f for f in FeatureExtractMode] # define os detectores de características disponíveis
     detector_index = 0
     detector_mode = detectors[detector_index]
     if detector_index >= len(detectors):
         detector_index = 0
     
     
-    webcam_device = webcam.Webcam()
-    kalman_filter = kalman.Kalman(points_to_track)
+    webcam_device = webcam.Webcam() # inicializa a webcam
+    kalman_filter = kalman.Kalman(points_to_track) # inicializa o filtro de Kalman
     
-    show_features = True
-    smooth_tracks = True
-    show_tracks = True
-    show_kalman = True
-    show_hud = True
-    enable_experimental_feature_ordering = False
-    experimental_ordering_previous_points = None
-    while True:
-        image_pair = take_pair_of_images(webcam_device)
-        features1 = extract_features(image_pair[0], points_to_track, detector_mode)
-        features2 = extract_features(image_pair[1], points_to_track, detector_mode)
-        if enable_experimental_feature_ordering:
-            if experimental_ordering_previous_points is not None:
-                features1 = align_features_to_previous(experimental_ordering_previous_points, features1)
-                features2 = align_features_to_previous(experimental_ordering_previous_points, features2)
-        set_kalman_points(
+    show_features = True # define se as características devem ser exibidas
+    smooth_tracks = True # define se os rastros devem ser suavizados
+    show_tracks = True # define se os rastros devem ser exibidos
+    show_kalman = True # define se os pontos do filtro de Kalman devem ser exibidos
+    show_hud = True # define se o HUD deve ser exibido
+    enable_experimental_feature_ordering = False # define se a ordenação experimental de características deve ser ativada
+    experimental_ordering_previous_points = None # define os pontos anteriores para a ordenação experimental
+
+    while True: # loop principal
+        image_pair = take_pair_of_images(webcam_device) # captura um par de imagens
+        features1 = extract_features(image_pair[0], points_to_track, detector_mode) # extrai características da primeira imagem
+        features2 = extract_features(image_pair[1], points_to_track, detector_mode) # extrai características da segunda imagem
+
+        if enable_experimental_feature_ordering: # se a ordenação experimental de características estiver ativada
+            if experimental_ordering_previous_points is not None: # se houver pontos anteriores
+                features1 = align_features_to_previous(experimental_ordering_previous_points, features1) # alinha as características da primeira imagem
+                features2 = align_features_to_previous(experimental_ordering_previous_points, features2) # alinha as características da segunda imagem
+        set_kalman_points( # atualiza os pontos do filtro de Kalman
             kalman_filter, features1
         )  # update points to kalman filter and get the predicted points
         tracked_features = get_movement_tracks(
             image_pair[0], features1, image_pair[1], features2, smooth_tracks
         )
-        if enable_experimental_feature_ordering:
-            experimental_ordering_previous_points = tracked_features
-        kalman_prediction = predict_kalman_points(kalman_filter)
+        if enable_experimental_feature_ordering: # se a ordenação experimental de características estiver ativada
+            experimental_ordering_previous_points = tracked_features # define os pontos anteriores para a ordenação experimental
+        kalman_prediction = predict_kalman_points(kalman_filter) # obtém os pontos do filtro de Kalman
         shown_image = image_pair[0]
-        if show_features:
+
+        if show_features: # se as características devem ser exibidas
             shown_image = draw_features(image_pair[0], features1)
-        if show_tracks:
+        if show_tracks: # se os rastros devem ser exibidos
             draw_tracks(shown_image, features1, tracked_features)
-        if show_kalman:
+        if show_kalman: # se os pontos do filtro de Kalman devem ser exibidos
             draw_kalman_points(shown_image, kalman_prediction)
-        if show_hud:
+        if show_hud: # se o HUD deve ser exibido
             cv.putText(
                 shown_image,
                 f"Features (f): {show_features}",
@@ -573,44 +576,45 @@ if __name__ == "__main__":
             )
             
 
-        cv.imshow("Image", shown_image)
+        cv.imshow("Image", shown_image) # exibe a imagem
         delay = int(1000 / 60)
         key = cv.waitKey(delay)
-        if key & 0xFF == ord("f"):
-            show_features = not show_features
-        if key & 0xFF == ord("t"):
-            show_tracks = not show_tracks
-        if key & 0xFF == ord("y"):
-            smooth_tracks = not smooth_tracks
-        if key & 0xFF == ord("k"):
-            show_kalman = not show_kalman
-        if key & 0xFF == ord("h"):
-            show_hud = not show_hud
-        if key & 0xFF == ord("m"):
+
+        if key & 0xFF == ord("f"): # se a tecla 'f' for pressionada
+            show_features = not show_features # inverte o estado de exibição das características
+        if key & 0xFF == ord("t"): # se a tecla 't' for pressionada
+            show_tracks = not show_tracks # inverte o estado de exibição dos rastros
+        if key & 0xFF == ord("y"): # se a tecla 'y' for pressionada
+            smooth_tracks = not smooth_tracks  # inverte o estado de suavização dos rastros
+        if key & 0xFF == ord("k"): # se a tecla 'k' for pressionada
+            show_kalman = not show_kalman # inverte o estado de exibição dos pontos do filtro de Kalman
+        if key & 0xFF == ord("h"): # se a tecla 'h' for pressionada
+            show_hud = not show_hud # inverte o estado de exibição do HUD
+        if key & 0xFF == ord("m"): # se a tecla 'm' for pressionada
             detector_index += 1
             if detector_index >= len(detectors):
                 detector_index = 0
             detector_mode = detectors[detector_index]
             experimental_ordering_previous_points = None
-        if key & 0xFF == ord("c"):
+        if key & 0xFF == ord("c"): # se a tecla 'c' for pressionada
             points_to_track_index += 1
             if points_to_track_index >= len(point_count_list):
                 points_to_track_index = 0
             points_to_track = point_count_list[points_to_track_index]
             experimental_ordering_previous_points = None
             kalman_filter = kalman.Kalman(points_to_track)
-        if key & 0xFF == ord("s"):
+        if key & 0xFF == ord("s"): # se a tecla 's' for pressionada
             set_index += 1
             if set_index >= len(available_sets):
                 set_index = 0
-        if key & 0xFF == ord("p"):
+        if key & 0xFF == ord("p"):  # se a tecla 'p' for pressionada
             setname = available_sets[set_index]
             full_image = process_set(setname, points_to_track, detector_mode, smooth_tracks, enable_experimental_feature_ordering)
             cv.imwrite(f"{setname}_processed.png", full_image)
-        if key & 0xFF == ord("e"):
+        if key & 0xFF == ord("e"):  # se a tecla 'e' for pressionada
             enable_experimental_feature_ordering = not enable_experimental_feature_ordering
             experimental_ordering_previous_points = None
-        if key & 0xFF == ord("q"):
+        if key & 0xFF == ord("q"): # se a tecla 'q' for pressionada
             cv.destroyAllWindows()
             break
     del webcam_device
